@@ -30,7 +30,7 @@
     [homeController release];
     [navc release];
     
-    
+    // test
     
     [self.window makeKeyAndVisible];
     
