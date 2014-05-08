@@ -960,7 +960,6 @@
 				5B9210B818AD2670000B362F /* Base64 */,
 				5B9210BD18AD2670000B362F /* crypto */,
 				5B9210C418AD2670000B362F /* Des */,
-				5B9210C718AD2670000B362F /* KeyChainItemWrapper */,
 				5B9210C818AD2670000B362F /* MD5 */,
 				5B9210CD18AD2670000B362F /* OpenSSL */,
 				5B9210D018AD2670000B362F /* RSA */,
@@ -1009,13 +1008,6 @@
 				5B9210C618AD2670000B362F /* DESEncryption.h */,
 			);
 			path = Des;
-			sourceTree = "<group>";
-		};
-		5B9210C718AD2670000B362F /* KeyChainItemWrapper */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = KeyChainItemWrapper;
 			sourceTree = "<group>";
 		};
 		5B9210C818AD2670000B362F /* MD5 */ = {
