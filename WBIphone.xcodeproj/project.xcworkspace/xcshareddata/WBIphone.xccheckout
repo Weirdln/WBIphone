@@ -5,36 +5,45 @@
 	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
 	<false/>
 	<key>IDESourceControlProjectIdentifier</key>
-	<string>F1583F7E-BBAC-478D-A8C1-D4589BBBABA1</string>
+	<string>1997BE0B-881E-4473-91D9-0A8C307C0520</string>
 	<key>IDESourceControlProjectName</key>
 	<string>WBIphone</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>3161B3C4-F880-4178-85D9-701DEB6CD1D5</key>
-		<string>https://github.com/Weirdln/WBIphone.git</string>
+		<key>637087BC-0EDC-4930-A89B-4C3C13583B60</key>
+		<string>https://github.com/Weirdln/WBIphone.git/trunk</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
 	<string>WBIphone.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>3161B3C4-F880-4178-85D9-701DEB6CD1D5</key>
+		<key>637087BC-0EDC-4930-A89B-4C3C13583B60</key>
 		<string>../..</string>
 	</dict>
+	<key>IDESourceControlProjectRepositoryRootDictionary</key>
+	<dict>
+		<key>637087BC-0EDC-4930-A89B-4C3C13583B60</key>
+		<string>https://github.com/Weirdln/WBIphone.git</string>
+	</dict>
 	<key>IDESourceControlProjectURL</key>
-	<string>https://github.com/Weirdln/WBIphone.git</string>
+	<string>https://github.com/Weirdln/WBIphone.git/trunk/WBIphone.xcodeproj</string>
 	<key>IDESourceControlProjectVersion</key>
 	<integer>110</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>3161B3C4-F880-4178-85D9-701DEB6CD1D5</string>
+	<string>637087BC-0EDC-4930-A89B-4C3C13583B60</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
+			<key>IDESourceControlRepositoryBranchesRelativeLocationKey</key>
+			<string>branches</string>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
-			<string>public.vcs.git</string>
+			<string>public.vcs.subversion</string>
+			<key>IDESourceControlRepositoryTrunkRelativeLocationKey</key>
+			<string>trunk</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>3161B3C4-F880-4178-85D9-701DEB6CD1D5</string>
+			<string>637087BC-0EDC-4930-A89B-4C3C13583B60</string>
 			<key>IDESourceControlWCCName</key>
-			<string>WBIphone</string>
+			<string>WBIphone.git</string>
 		</dict>
 	</array>
 </dict>
