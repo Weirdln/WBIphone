@@ -660,19 +660,11 @@
 		5B920F6E18AD1534000B362F /* HorizontalTableView */ = {
 			isa = PBXGroup;
 			children = (
-				5B920F6F18AD1534000B362F /* HorizontalTableSectionView */,
 				5B920F7018AD1534000B362F /* HorizontalTableView.h */,
 				5B920F7118AD1534000B362F /* HorizontalTableView.m */,
 				5B920F7218AD1534000B362F /* HorizontalTableViewCell */,
 			);
 			path = HorizontalTableView;
-			sourceTree = "<group>";
-		};
-		5B920F6F18AD1534000B362F /* HorizontalTableSectionView */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = HorizontalTableSectionView;
 			sourceTree = "<group>";
 		};
 		5B920F7218AD1534000B362F /* HorizontalTableViewCell */ = {
