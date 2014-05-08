@@ -1,0 +1,1 @@
+- (void)setColor:(UIColor *)color fromIndex:(NSInteger)location length:(NSInteger)length;
