@@ -1532,7 +1532,7 @@
 				INFOPLIST_FILE = "WBIphone/WBIphone-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/weirdln/Projects/Ios/WBIphone/Lib/Encryption/OpenSSL,
+					"\"$(SRCROOT)/Lib/Encryption/OpenSSL\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
@@ -1549,7 +1549,7 @@
 				INFOPLIST_FILE = "WBIphone/WBIphone-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/weirdln/Projects/Ios/WBIphone/Lib/Encryption/OpenSSL,
+					"\"$(SRCROOT)/Lib/Encryption/OpenSSL\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
