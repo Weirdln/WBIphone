@@ -10,7 +10,7 @@
 #import "CMRefreshTableHeaderView.h"
 #import "MethodInterceptor.h"
 
-#define timeOutTimeInterval 2  // 刷新超时时间
+#define timeOutTimeInterval .5  // 刷新超时时间
 
 // pull direction
 typedef enum {
@@ -32,6 +32,12 @@ typedef enum {
     CMTableViewLoadType_PreLoad           // 预加载更多
 }CMTableViewLoadType;
 
+//
+typedef enum {
+    CMTableViewStyleNormal,                  // regular table view
+//    CMTableViewStyleNormal
+}CMTableViewStyle;
+
 
 // CMRefreshTableViewDelegate
 @class CMTableView;
@@ -52,7 +58,7 @@ typedef enum {
 - (void)refreshDataView:(CMTableView *)dataView loadType:(CMTableViewLoadType)loadType indexPath:(NSIndexPath*)indexPath;
 
 /**
- *  滚动加载当前视图
+ *  加载当前滚动视图
  *
  *  @param dataView 当前tableView
  *  @param visibleRange    当前视图范围{section : range,...}
@@ -107,6 +113,16 @@ typedef enum {
 - (id)initWithFrame:(CGRect)frame rollingLoad:(BOOL)load;
 
 /**
+ *  <#Description#>
+ *
+ *  @param frame <#frame description#>
+ *  @param cmStyle <#style description#>
+ *
+ *  @return <#return value description#>
+ */
+- (id)initWithFrame:(CGRect)frame cmStyle:(CMTableViewStyle)style;
+
+/**
  *  刷新tableView
  */
 -(void)reloadData;
@@ -117,9 +133,20 @@ typedef enum {
 -(void)startManualRefresh;
 
 /**
+ *  手动加载更多，（更多按钮）
+ */
+-(void)startManualLoad;
+
+/**
  *  上下拉联网完成后调用，结束动画并隐藏
  */
 - (void)refreshDone;
+
+/**
+ *  数据全部数据后调用此方法，就不能再使用上拉加载
+ *  操作数据以后调用refreshDone里面会对该状态重置
+ */
+-(void)setHitTheEnd;
 
 /**
  * 计算每个section的正显示行的范围

@@ -371,4 +371,16 @@
 }
 
 
+#pragma mark - UIScrollViewDelegate
+- (void)_onEndScroll
+{
+    NSDictionary *visibleRangeDic = [self _visibleRangeOfSectionWithVisibleIndexPaths:[_tableView indexPathsForVisibleRows]];
+    
+    if([self _isNeedForceRefreshWithVisibleRange:visibleRangeDic])
+    {
+        CDebugLog(@"%s", __FUNCTION__);
+        [self _foreceReqDataWithRequestInfo:[self _requestInfoForForceRefreshWithVisibleRange:visibleRangeDic]];
+    }
+}
+
 @end

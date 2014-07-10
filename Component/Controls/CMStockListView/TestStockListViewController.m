@@ -38,17 +38,18 @@
 //    self.view = [[[UIView alloc] initWithFrame:[[UIScreen mainScreen]bounds]] autorelease];
     self.dataList = [NSMutableArray array];
     
-    for(int i = 0;i < 5; i ++)
+    for(int i = 0;i < 1; i ++)
         [self.dataList addObject:[NSNumber numberWithInt:i]];
 
-    testTable = [[CMStockListView alloc] initWithFrame:CGRectMake(0, 0, ScreenW, ScreenH - kSysStatusBarHeight - kNavToolBarHeight) pullDirection:CMTableViewPullDirectionUpDown];
+//    testTable = [[CMStockListView alloc] initWithFrame:CGRectMake(0, 0, ScreenW, ScreenH - kSysStatusBarHeight - kNavToolBarHeight) pullDirection:CMTableViewPullDirectionUpDown];
+    testTable = [[CMStockListView alloc] initWithFrame:CGRectMake(0, 0, ScreenW, ScreenH - kSysStatusBarHeight - kNavToolBarHeight) cmStyle:CMTableViewStyleNormal];
     testTable.delegate = self;
     testTable.dataSource = self;
     testTable.refreshDataDelegate = (id<CMRefreshTableViewDelegate>)self;
     [self.view addSubview:testTable];
     [testTable release];
     
-//    [testTable performSelector:@selector(startManualRefresh) withObject:Nil afterDelay:5];
+//    [testTable performSelector:@selector(startManualRefresh) withObject:nil afterDelay:2];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -74,14 +75,28 @@
 
 - (void)refreshDataView:(CMTableView *)dataView loadType:(CMTableViewLoadType)loadType indexPath:(NSIndexPath*)indexPath
 {
-    NSLog(@"refreshDataView loadType = %d",loadType);        
+    NSLog(@"refreshDataView loadType = %d",loadType);
+
+    double delayInSeconds = 1;
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
+    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        if(loadType == CMTableViewLoadType_LoadMore)
+        {
+            int currentCount = [self.dataList count];
+            for(int i = currentCount; i < currentCount + 1; i ++)
+                [self.dataList addObject:[NSNumber numberWithInt:i]];
+        }
+        else
+        {
+            [self.dataList removeAllObjects];
+            for(int i = 0;i < 1; i ++)
+                [self.dataList addObject:[NSNumber numberWithInt:i]];
+        }
+        
+        [dataView refreshDone];
+    });
 }
 - (void)refreshDataView:(CMTableView *)dataView visibleRange:(NSDictionary *)rangeDict;
-{
-    
-}
-
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
     
 }

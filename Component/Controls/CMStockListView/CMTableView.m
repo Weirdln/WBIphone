@@ -57,6 +57,28 @@
     return [self initWithFrame:frame pullDirection:cmDirection rollingLoad:NO];
 }
 
+// 下边提示条一直存在的初始化方法
+- (id)initWithFrame:(CGRect)frame cmStyle:(CMTableViewStyle)style
+{
+    self = [self initWithFrame:frame pullDirection:CMTableViewPullDirectionUpDown rollingLoad:NO];
+    if(self)
+    {
+        [_footerView setState:CMPullRefreshClickNormal];
+        // 默认获取第一个cell的高度，如果取不到设默认值 65.0
+        float heightOfFirstCell =[_tableView.delegate tableView:_tableView heightForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
+        _footerView.clickHeight = heightOfFirstCell <= 0 ? 65.0f : heightOfFirstCell;
+        _tableView.contentInset = EdgeInsetSetBottom(_tableView.contentInset, _footerView.clickHeight);
+        
+        
+        UIButton *loadButton = [[UIButton alloc] initWithFrame:_footerView.bounds];
+        loadButton.backgroundColor = [UIColor clearColor];
+        [loadButton addTarget:self action:@selector(startManualLoad) forControlEvents:UIControlEventTouchDown];
+        [_footerView addSubview:loadButton];
+        [loadButton release];
+    }
+    return self;
+}
+
 - (id)initWithFrame:(CGRect)frame pullDirection:(CMTableViewPullDirection) cmDirection rollingLoad:(BOOL)load
 {
     self = [super initWithFrame:frame];
@@ -143,23 +165,42 @@
 - (void)refreshDone
 {
     _reloading = NO;
-    [_headView egoRefreshScrollViewDataSourceDidFinishedLoading:_tableView];
-    [_footerView egoRefreshScrollViewDataSourceDidFinishedLoading:_tableView];
-    [_rightView egoRefreshScrollViewDataSourceDidFinishedLoading:_tableView];
-    [_leftView egoRefreshScrollViewDataSourceDidFinishedLoading:_tableView];
+    [self reloadData];
+
+//    if(_tableView.contentOffset.y <= 0)
+        [_headView cmRefreshScrollViewDataSourceDidFinishedLoading:_tableView];
+//    else if(_tableView.contentOffset.y >= 0)
+        [_footerView cmRefreshScrollViewDataSourceDidFinishedLoading:_tableView];
+//    if(_tableView.contentOffset.x <= 0)
+        [_rightView cmRefreshScrollViewDataSourceDidFinishedLoading:_tableView];
+//    else if(_tableView.contentOffset.x >= 0)
+        [_leftView cmRefreshScrollViewDataSourceDidFinishedLoading:_tableView];
 }
 
 -(void)startManualRefresh
 {
-    [UIView animateWithDuration:.3f animations:^{
-        [_tableView setContentOffset:CGPointMake(0, -startOffset) animated:NO];
-    } completion:^(BOOL finished) {
-        _reloading = NO;
-        [_headView refreshLastUpdatedDate];
-        [_headView egoRefreshScrollViewDidEndDragging:_tableView];
+    _reloading = NO;
+    [_headView setState:CMPullRefreshLoading];
+    [_headView refreshLastUpdatedDate];
+    [UIView animateWithDuration:FLIP_ANIMATION_DURATION animations:^{
+        _tableView.contentInset = EdgeInsetSetTop(_tableView.contentInset, startOffset);
     }];
+    [self cmRefreshTableHeaderDidTriggerRefresh:_headView pullDirection:CMPullOrientationDown];
 }
 
+-(void)startManualLoad
+{
+    _reloading = NO;
+    [_footerView setState:CMPullRefreshClickLoading];
+    [self cmRefreshTableHeaderDidTriggerRefresh:_footerView pullDirection:CMPullOrientationUp];
+}
+
+
+-(void)setHitTheEnd
+{
+    [_footerView setState:CMPullRefreshEnd];
+    [_rightView setState:CMPullRefreshEnd];
+}
 
 
 /**
@@ -178,10 +219,15 @@
 {
     if(pullDirection != CMTableViewPullDirectionNone)
     {
-        [_headView egoRefreshScrollViewDidScroll:scrollView];
-        [_footerView egoRefreshScrollViewDidScroll:scrollView];
-        [_rightView egoRefreshScrollViewDidScroll:scrollView];
-        [_leftView egoRefreshScrollViewDidScroll:scrollView];
+        if(scrollView.contentOffset.y < 0)
+            [_headView cmRefreshScrollViewDidScroll:scrollView];
+        else if(scrollView.contentOffset.y > 0)
+            [_footerView cmRefreshScrollViewDidScroll:scrollView];
+        
+        if(scrollView.contentOffset.x < 0)
+            [_rightView cmRefreshScrollViewDidScroll:scrollView];
+        else if(scrollView.contentOffset.x > 0)
+            [_leftView cmRefreshScrollViewDidScroll:scrollView];
     }
     
     // 如果上层需要这个代理，则传递出去
@@ -193,10 +239,15 @@
 {
     if(pullDirection != CMTableViewPullDirectionNone)
     {
-        [_headView egoRefreshScrollViewDidEndDragging:scrollView];
-        [_footerView egoRefreshScrollViewDidEndDragging:scrollView];
-        [_rightView egoRefreshScrollViewDidEndDragging:scrollView];
-        [_leftView egoRefreshScrollViewDidEndDragging:scrollView];
+        if(scrollView.contentOffset.y < 0)
+            [_headView cmRefreshScrollViewDidEndDragging:scrollView];
+        else if(scrollView.contentOffset.y > 0)
+            [_footerView cmRefreshScrollViewDidEndDragging:scrollView];
+        
+        if(scrollView.contentOffset.x < 0)
+            [_rightView cmRefreshScrollViewDidEndDragging:scrollView];
+        else if(scrollView.contentOffset.x > 0)
+            [_leftView cmRefreshScrollViewDidEndDragging:scrollView];
     }
     else if(isRollingLoad)
     {
@@ -230,7 +281,7 @@
 
 #pragma mark - CMRefreshTableHeaderDelegate
 
-- (void)egoRefreshTableHeaderDidTriggerRefresh:(CMRefreshTableHeaderView*)view pullDirection:(CMPullOrientation) cmDirection
+- (void)cmRefreshTableHeaderDidTriggerRefresh:(CMRefreshTableHeaderView*)view pullDirection:(CMPullOrientation) cmDirection
 {
     if(self.refreshDataDelegate != nil && [self.refreshDataDelegate respondsToSelector:@selector(refreshDataView:loadType:indexPath:)])
     {
@@ -246,16 +297,14 @@
             [self.refreshDataDelegate refreshDataView:self loadType:CMTableViewLoadType_LoadMore indexPath:lastIndexPath];
         }
     }
-    
-    [self performSelector:@selector(refreshDone) withObject:nil afterDelay:timeOutTimeInterval];
 }
 
-- (BOOL)egoRefreshTableHeaderDataSourceIsLoading:(CMRefreshTableHeaderView*)view
+- (BOOL)cmRefreshTableHeaderDataSourceIsLoading:(CMRefreshTableHeaderView*)view
 {
     return _reloading;
 }
 
-- (NSDate*)egoRefreshTableHeaderDataSourceLastUpdated:(CMRefreshTableHeaderView*)view
+- (NSDate*)cmRefreshTableHeaderDataSourceLastUpdated:(CMRefreshTableHeaderView*)view
 {
     return [NSDate date];
 }

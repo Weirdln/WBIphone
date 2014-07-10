@@ -8,13 +8,10 @@
 
 #import "CMRefreshTableHeaderView.h"
 
-
-#define FLIP_ANIMATION_DURATION 0.18f
-
-
-@interface CMRefreshTableHeaderView (Private)
+@interface CMRefreshTableHeaderView ()
 {
-    
+    float maxSizeFrameOrContent;        // ContentSize和Frame中height或者width的最大值
+    float marginSizeFramePlusContent;   // Frame比ContentSize中height或者width的长的距离，如果Frame比较小，则取值为0
 }
 - (void)setState:(CMPullRefreshState)aState;
 
@@ -23,13 +20,15 @@
 @implementation CMRefreshTableHeaderView
 
 //@synthesize startOffset;
+@synthesize clickHeight;
 @synthesize delegate=_delegate;
 
 - (id)initWithFrame:(CGRect)frame {
     if (self = [super initWithFrame:frame]) {
 		
-//        // 默认拖动65开始生效
-//        startOffset = 65.0f;
+        //        // 默认拖动65开始生效
+        //        startOffset = 65.0f;
+        clickHeight = 65.0f;
         
 		self.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 		self.backgroundColor = [UIColor clearColor];
@@ -87,14 +86,14 @@
  *
  *  @return footer加载的位置
  */
--(float)maxSizeHeight
+-(float)maxSize
 {
     return MAX(_scrollView.contentSize.height, _scrollView.frame.size.height);
 }
 
--(float)maxSizeWidth
+-(float)marginSize
 {
-    return MAX(_scrollView.contentSize.width, _scrollView.frame.size.width);
+    return MAX(_scrollView.frame.size.height - _scrollView.contentSize.height, 0) ;
 }
 
 - (void)adjustPosition
@@ -102,7 +101,8 @@
     CGSize size = _scrollView.frame.size;
     CGPoint center = CGPointZero;
     
-    NSLog(@"contentheight = %f, height = %f",_scrollView.contentSize.height,_scrollView.frame.size.height);
+    maxSizeFrameOrContent = [self maxSize];
+    marginSizeFramePlusContent = [self marginSize];
     
     switch (_orientation)
     {
@@ -110,13 +110,25 @@
             center = CGPointMake(size.width/2, 0.0f-size.height/2);
             break;
         case CMPullOrientationUp:
-            center = CGPointMake(size.width/2, [self maxSizeHeight] + size.height/2);
+            if(_state == CMPullRefreshClickNormal || _state == CMPullRefreshClickLoading)
+            {
+                //调整尾部高度和控件位置
+                self.frame = RectSetHeight(self.frame, clickHeight);
+                center = CGPointMake(size.width/2, _scrollView.contentSize.height + clickHeight/2);
+
+                _statusLabel.frame = RectSetY(_statusLabel.frame, (self.frame.size.height - 20.0)/2);
+                _activityView.frame = RectSetY(_activityView.frame, (self.frame.size.height - 20.0)/2);
+            }
+            else
+            {
+                center = CGPointMake(size.width/2, maxSizeFrameOrContent + size.height/2);
+            }
             break;
         case CMPullOrientationRight:
             center = CGPointMake(0.0f-size.width/2, size.height/2);
             break;
         case CMPullOrientationLeft:
-            center = CGPointMake(_scrollView.contentSize.width+size.width/2, size.height/2);
+            center = CGPointMake(maxSizeFrameOrContent+size.width/2, size.height/2);
             break;
         default:
             break;
@@ -141,7 +153,7 @@
             degrees = 0.0f;
             break;
         case CMPullOrientationUp:
-            center = CGPointMake(size.width/2,[self maxSizeHeight]+size.height/2);
+            center = CGPointMake(size.width/2,scrollView.contentSize.height+size.height/2);
             degrees = 180.0f;
             break;
         case CMPullOrientationRight:
@@ -178,9 +190,9 @@
 
 - (void)refreshLastUpdatedDate
 {
-	if ([_delegate respondsToSelector:@selector(egoRefreshTableHeaderDataSourceLastUpdated:)])
+	if ([_delegate respondsToSelector:@selector(cmRefreshTableHeaderDataSourceLastUpdated:)])
     {
-		NSDate *date = [_delegate egoRefreshTableHeaderDataSourceLastUpdated:self];
+		NSDate *date = [_delegate cmRefreshTableHeaderDataSourceLastUpdated:self];
 		date = date ? date : [NSDate date];
         
 		NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
@@ -218,7 +230,6 @@
 		[[NSUserDefaults standardUserDefaults] setObject:_lastUpdatedLabel.text forKey:@"CMRefreshTableView_LastRefresh"];
 		[[NSUserDefaults standardUserDefaults] synchronize];
 		[formatter release];
-		
 	}
     else
     {
@@ -280,10 +291,20 @@
 			_arrowImage.hidden = YES;
 			[CATransaction commit];
 			break;
+        case CMPullRefreshClickNormal:
+            _arrowImage.hidden = YES;
+            _statusLabel.text = NSLocalizedString(@"更多...", @"");
+            [_activityView stopAnimating];
+            break;
+        case CMPullRefreshClickLoading:
+            _arrowImage.hidden = YES;
+            _statusLabel.text = NSLocalizedString(@"正在加载...", @"");
+            [_activityView startAnimating];
+			break;
         case CMPullRefreshEnd:
             _arrowImage.hidden = YES;
-            [_activityView stopAnimating];
             _statusLabel.text = NSLocalizedString(@"没有了...", @"");
+            [_activityView stopAnimating];
 			break;
 		default:
 			break;
@@ -294,53 +315,15 @@
 
 
 #pragma mark - ScrollView Methods
-- (void)egoRefreshScrollViewDidScroll:(UIScrollView *)scrollView
+- (void)cmRefreshScrollViewDidScroll:(UIScrollView *)scrollView
 {
-    // 加载状态 ,只处理偏移量(拖动位置)，与拖动状态互斥
-	if (_state == CMPullRefreshLoading)
+    // 只需要处理  正在下拉、下拉达到释放刷新 两种情况（主要目的再两个状态之间切换）
+    if (scrollView.isDragging && (_state == CMPullRefreshNormal || _state == CMPullRefreshPulling))
     {
-        switch (_orientation)
-        {
-            case CMPullOrientationDown:
-            {
-                CGFloat offset = MAX(scrollView.contentOffset.y * -1, 0);
-                offset = MIN(offset, startOffset);
-                scrollView.contentInset = UIEdgeInsetsMake(offset, 0.0f, 0.0f, 0.0f);
-                break;
-            }
-            case CMPullOrientationUp:
-            {
-                CGFloat offset = MAX(scrollView.frame.size.height+scrollView.contentOffset.y-scrollView.contentSize.height, 0);
-                offset = MIN(offset, startOffset);
-                scrollView.contentInset = UIEdgeInsetsMake(0.0f, 0.0f, offset, 0.0f);
-                break;
-            }
-            case CMPullOrientationRight:
-            {
-                CGFloat offset = MAX(scrollView.contentOffset.x * -1, 0);
-                offset = MIN(offset, startOffset);
-                scrollView.contentInset = UIEdgeInsetsMake(0.0f, offset, 0.0f, 0.0f);
-                break;
-            }
-            case CMPullOrientationLeft:
-            {
-                CGFloat offset = MAX(scrollView.frame.size.width+scrollView.contentOffset.x-scrollView.contentSize.width, 0);
-                offset = MIN(offset, startOffset);
-                scrollView.contentInset = UIEdgeInsetsMake(0.0f, 0.0f, 0.0f, offset);
-                break;
-            }
-            default:
-                break;
-        }
-	}
-    else if (scrollView.isDragging)
-    {
-        NSLog(@"scrollView.contentOffset.y = %f",scrollView.contentOffset.y);
-        
 		BOOL _loading = NO;
-		if ([_delegate respondsToSelector:@selector(egoRefreshTableHeaderDataSourceIsLoading:)])
+		if ([_delegate respondsToSelector:@selector(cmRefreshTableHeaderDataSourceIsLoading:)])
         {
-			_loading = [_delegate egoRefreshTableHeaderDataSourceIsLoading:self];
+			_loading = [_delegate cmRefreshTableHeaderDataSourceIsLoading:self];
 		}
         
         BOOL pullingCondition = NO;
@@ -351,16 +334,14 @@
             {
                 pullingCondition = (scrollView.contentOffset.y > -startOffset && scrollView.contentOffset.y < 0.0f);
                 normalCondition = (scrollView.contentOffset.y < -startOffset);
+//                NSLog(@"_state = %d,pullingCondition = %d,normalCondition = %d,_loading = %d",_state,pullingCondition,normalCondition,_loading);
                 break;
             }
             case CMPullOrientationUp:
             {
-//                CGFloat y = scrollView.contentOffset.y+[self maxSizeHeight];
-//                pullingCondition = ((y < ([self maxSizeHeight]+startOffset)) && (y > [self maxSizeHeight]));
-//                normalCondition = (y > ([self maxSizeHeight]+startOffset));
-                
-                pullingCondition = ((scrollView.contentOffset.y + scrollView.frame.size.height < scrollView.contentSize.height + startOffset) && (scrollView.contentOffset.y > 0));
-                normalCondition = scrollView.contentOffset.y + scrollView.frame.size.height > scrollView.contentSize.height + startOffset;
+                CGFloat y = scrollView.contentOffset.y+scrollView.frame.size.height; // 当前滑动的最大距离
+                pullingCondition = ((y < maxSizeFrameOrContent + startOffset) && (y > maxSizeFrameOrContent));
+                normalCondition = (y > maxSizeFrameOrContent + startOffset);
                 break;
             }
             case CMPullOrientationRight:
@@ -372,8 +353,8 @@
             case CMPullOrientationLeft:
             {
                 CGFloat x = scrollView.contentOffset.x+scrollView.frame.size.width;
-                pullingCondition = ((x < (scrollView.contentSize.width+startOffset)) && (x > scrollView.contentSize.width));
-                normalCondition = (x > (scrollView.contentSize.width+startOffset));
+                pullingCondition = ((x < maxSizeFrameOrContent + startOffset) && (x > maxSizeFrameOrContent));
+                normalCondition = (x > maxSizeFrameOrContent + startOffset);
                 break;
             }
             default:
@@ -391,76 +372,120 @@
 	}
 }
 
-- (void)egoRefreshScrollViewDidEndDragging:(UIScrollView *)scrollView
+- (void)cmRefreshScrollViewDidEndDragging:(UIScrollView *)scrollView
 {
 	BOOL _loading = NO;  // 是否在刷新的状态，如果处于刷新状态则不需要再次调用
-	if ([_delegate respondsToSelector:@selector(egoRefreshTableHeaderDataSourceIsLoading:)])
+	if ([_delegate respondsToSelector:@selector(cmRefreshTableHeaderDataSourceIsLoading:)])
     {
-		_loading = [_delegate egoRefreshTableHeaderDataSourceIsLoading:self];
+		_loading = [_delegate cmRefreshTableHeaderDataSourceIsLoading:self];
 	}
     
     BOOL condition = NO;
-    UIEdgeInsets insets = UIEdgeInsetsZero;
+    UIEdgeInsets insets = scrollView.contentInset;
     switch (_orientation)
     {
         case CMPullOrientationDown:
         {
             condition = (scrollView.contentOffset.y <= - startOffset);
-            insets = UIEdgeInsetsMake(startOffset, 0.0f, 0.0f, 0.0f);
+            insets = EdgeInsetSetTop(insets, startOffset);
             break;
         }
         case CMPullOrientationUp:
         {
-            CGFloat y = scrollView.contentOffset.y+scrollView.frame.size.height-scrollView.contentSize.height;
-            condition = (y > startOffset);
-            insets = UIEdgeInsetsMake(0.0f, 0.0f, startOffset, 0.0f);
+            if(_state == CMPullRefreshClickNormal || _state == CMPullRefreshClickLoading)
+                condition = (scrollView.contentOffset.y >= clickHeight);
+            else
+                condition = (scrollView.contentOffset.y+scrollView.frame.size.height >= maxSizeFrameOrContent + startOffset);
+
+            insets = EdgeInsetSetBottom(insets, marginSizeFramePlusContent + startOffset);
             break;
         }
         case CMPullOrientationRight:
         {
             condition = (scrollView.contentOffset.x <= - startOffset);
-            insets = UIEdgeInsetsMake(0.0f, startOffset, 0.0f, 0.0f);
+            insets = EdgeInsetSetLeft(insets, startOffset);
             break;
         }
         case CMPullOrientationLeft:
         {
-            CGFloat x = scrollView.contentOffset.x+scrollView.frame.size.width-scrollView.contentSize.width;
-            condition = (x > startOffset);
-            insets = UIEdgeInsetsMake(0.0f, 0.0f, 0.0f, startOffset);
+            condition = (scrollView.contentOffset.x+scrollView.frame.size.width >= maxSizeFrameOrContent + startOffset);
+            insets = EdgeInsetSetRight(insets, marginSizeFramePlusContent + startOffset);
             break;
         }
         default:
             break;
     }
     
-	if (condition && !_loading)
+	if (condition && !_loading && _state != CMPullRefreshEnd)
     {
-		if ([_delegate respondsToSelector:@selector(egoRefreshTableHeaderDidTriggerRefresh:pullDirection:)])
-        {
-			[_delegate egoRefreshTableHeaderDidTriggerRefresh:self pullDirection:_orientation];
-		}
-		
         /* Set NO paging Disable */
         _pagingEnabled = scrollView.pagingEnabled;
         scrollView.pagingEnabled = NO;
         
-		[self setState:CMPullRefreshLoading];
-		[UIView beginAnimations:nil context:NULL];
-		[UIView setAnimationDuration:0.2];
-		scrollView.contentInset = insets;
-		[UIView commitAnimations];
+        if(_state == CMPullRefreshClickNormal || _state == CMPullRefreshClickLoading)
+        {
+            [self setState:CMPullRefreshClickLoading];
+        }
+        else
+        {
+            [self setState:CMPullRefreshLoading];
+            [UIView animateWithDuration:FLIP_ANIMATION_DURATION animations:^{
+                scrollView.contentInset = insets;
+            }];
+        }
+        
+        if ([_delegate respondsToSelector:@selector(cmRefreshTableHeaderDidTriggerRefresh:pullDirection:)])
+        {
+			[_delegate cmRefreshTableHeaderDidTriggerRefresh:self pullDirection:_orientation];
+		}
 	}
 }
 
-- (void)egoRefreshScrollViewDataSourceDidFinishedLoading:(UIScrollView *)scrollView
+- (void)cmRefreshScrollViewDataSourceDidFinishedLoading:(UIScrollView *)scrollView
 {
-	[UIView beginAnimations:nil context:NULL];
-	[UIView setAnimationDuration:.3];
-	[scrollView setContentInset:UIEdgeInsetsZero];
-	[UIView commitAnimations];
-	scrollView.pagingEnabled = _pagingEnabled;
-	[self setState:CMPullRefreshNormal];
-    
+    if(!_activityView.isAnimating) // 如果当前没有动画，不做处理
+        return;
+    UIEdgeInsets insets = scrollView.contentInset;
+
+    if(_state == CMPullRefreshClickNormal || _state == CMPullRefreshClickLoading)
+    {
+        [self setState:CMPullRefreshClickNormal];
+        insets = EdgeInsetSetBottom(insets, clickHeight);
+    }
+    else
+    {
+        [self setState:CMPullRefreshNormal];
+        switch (_orientation)
+        {
+            case CMPullOrientationDown:
+            {
+                insets = EdgeInsetSetTop(insets, 0);
+                break;
+            }
+            case CMPullOrientationUp:
+            {
+                insets = EdgeInsetSetBottom(insets, marginSizeFramePlusContent);
+                break;
+            }
+            case CMPullOrientationRight:
+            {
+                insets = EdgeInsetSetLeft(insets, 0);
+                break;
+            }
+            case CMPullOrientationLeft:
+            {
+                insets = EdgeInsetSetRight(insets, marginSizeFramePlusContent);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    [UIView animateWithDuration:FLIP_ANIMATION_DURATION animations:^{
+        [scrollView setContentInset:insets];
+    }];
+    scrollView.pagingEnabled = _pagingEnabled;
 }
 
 
