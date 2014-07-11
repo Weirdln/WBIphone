@@ -60,21 +60,41 @@
 // 下边提示条一直存在的初始化方法
 - (id)initWithFrame:(CGRect)frame cmStyle:(CMTableViewStyle)style
 {
-    self = [self initWithFrame:frame pullDirection:CMTableViewPullDirectionUpDown rollingLoad:NO];
+    CMTableViewPullDirection direction = CMTableViewPullDirectionNone;
+    
+    if(style & 1)  // 需要下拉
+    {
+        direction |= CMTableViewPullDirectionDown;
+    }
+    
+    if((style & (1 << 1)) >> 1 || (style & (1 << 2)) >> 2)  // 需要上拉
+    {
+        direction |= CMTableViewPullDirectionUp;
+    }
+    
+    self = [self initWithFrame:frame pullDirection:direction rollingLoad:NO];
     if(self)
     {
-        [_footerView setState:CMPullRefreshClickNormal];
-        // 默认获取第一个cell的高度，如果取不到设默认值 65.0
-        float heightOfFirstCell =[_tableView.delegate tableView:_tableView heightForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
-        _footerView.clickHeight = heightOfFirstCell <= 0 ? 65.0f : heightOfFirstCell;
-        _tableView.contentInset = EdgeInsetSetBottom(_tableView.contentInset, _footerView.clickHeight);
+        if((style & (1 << 2)) >> 2)  // 如果需要click点击
+        {
+            [_footerView setState:CMPullRefreshClickNormal];
+            // 默认获取第一个cell的高度，如果取不到设默认值 65.0
+            //        float heightOfFirstCell =[_tableView.delegate tableView:_tableView heightForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
+            //        _footerView.clickHeight = heightOfFirstCell <= 0 ? 65.0f : heightOfFirstCell;
+            _tableView.contentInset = EdgeInsetSetBottom(_tableView.contentInset, _footerView.clickHeight);
+            
+            
+            UIButton *loadButton = [[UIButton alloc] initWithFrame:_footerView.bounds];
+            loadButton.backgroundColor = [UIColor clearColor];
+            [loadButton addTarget:self action:@selector(startManualLoad) forControlEvents:UIControlEventTouchDown];
+            [_footerView addSubview:loadButton];
+            [loadButton release];
+        }
         
-        
-        UIButton *loadButton = [[UIButton alloc] initWithFrame:_footerView.bounds];
-        loadButton.backgroundColor = [UIColor clearColor];
-        [loadButton addTarget:self action:@selector(startManualLoad) forControlEvents:UIControlEventTouchDown];
-        [_footerView addSubview:loadButton];
-        [loadButton release];
+        if((style & (1 << 3)) >> 3)  // 如果需要click点击
+        {
+            isRollingLoad = YES;
+        }
     }
     return self;
 }
@@ -183,16 +203,19 @@
     [_headView setState:CMPullRefreshLoading];
     [_headView refreshLastUpdatedDate];
     [UIView animateWithDuration:FLIP_ANIMATION_DURATION animations:^{
-        _tableView.contentInset = EdgeInsetSetTop(_tableView.contentInset, startOffset);
+        _tableView.contentInset = EdgeInsetSetTop(_tableView.contentInset, _headView.startOffset);
     }];
     [self cmRefreshTableHeaderDidTriggerRefresh:_headView pullDirection:CMPullOrientationDown];
 }
 
 -(void)startManualLoad
 {
-    _reloading = NO;
-    [_footerView setState:CMPullRefreshClickLoading];
-    [self cmRefreshTableHeaderDidTriggerRefresh:_footerView pullDirection:CMPullOrientationUp];
+    if(_footerView.state != CMPullRefreshEnd)
+    {
+        _reloading = NO;
+        [_footerView setState:CMPullRefreshClickLoading];
+        [self cmRefreshTableHeaderDidTriggerRefresh:_footerView pullDirection:CMPullOrientationUp];
+    }
 }
 
 

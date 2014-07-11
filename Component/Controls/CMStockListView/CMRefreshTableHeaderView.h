@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
 
-#define startOffset 65.0f
+//#define startOffset 65.0f
 #define FLIP_ANIMATION_DURATION 0.18f
 
 #define RectX(rect)                                   rect.origin.x
@@ -41,9 +41,9 @@ typedef enum{
 	CMPullRefreshPulling = 0,
 	CMPullRefreshNormal,
 	CMPullRefreshLoading,
+    CMPullRefreshEnd,
     CMPullRefreshClickNormal,
     CMPullRefreshClickLoading,
-    CMPullRefreshEnd,
 } CMPullRefreshState;
 
 @protocol CMRefreshTableHeaderDelegate;
@@ -63,17 +63,15 @@ typedef enum{
 	UIActivityIndicatorView *_activityView;
 }
 
-//@property (nonatomic) float startOffset; // 开始判断的偏移量
+@property (nonatomic) float startOffset; // 开始判断的偏移量
 @property (nonatomic) float clickHeight;   // 点击加载更多行的高度
+@property (nonatomic) CMPullRefreshState state;
 @property (nonatomic,assign) id <CMRefreshTableHeaderDelegate> delegate;
 
 - (id)initWithScrollView:(UIScrollView* )scrollView orientation:(CMPullOrientation)orientation;
 
 // UIScrollViewde contensize发生改变时，需要重新设置framework
 - (void)adjustPosition;
-
-// 设置状态
-- (void)setState:(CMPullRefreshState)aState;
 
 // 刷新上次操作时间
 - (void)refreshLastUpdatedDate;

@@ -13,22 +13,21 @@
     float maxSizeFrameOrContent;        // ContentSize和Frame中height或者width的最大值
     float marginSizeFramePlusContent;   // Frame比ContentSize中height或者width的长的距离，如果Frame比较小，则取值为0
 }
-- (void)setState:(CMPullRefreshState)aState;
 
 @end
 
 @implementation CMRefreshTableHeaderView
 
-//@synthesize startOffset;
+@synthesize startOffset;
 @synthesize clickHeight;
+@synthesize state = _state;
 @synthesize delegate=_delegate;
 
 - (id)initWithFrame:(CGRect)frame {
     if (self = [super initWithFrame:frame]) {
 		
-        //        // 默认拖动65开始生效
-        //        startOffset = 65.0f;
-        clickHeight = 65.0f;
+        // 默认拖动65开始生效
+        startOffset = clickHeight = 65.0f;
         
 		self.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 		self.backgroundColor = [UIColor clearColor];
@@ -81,62 +80,6 @@
     return self;
 }
 
-/**
- *  获取table视图最大高度
- *
- *  @return footer加载的位置
- */
--(float)maxSize
-{
-    return MAX(_scrollView.contentSize.height, _scrollView.frame.size.height);
-}
-
--(float)marginSize
-{
-    return MAX(_scrollView.frame.size.height - _scrollView.contentSize.height, 0) ;
-}
-
-- (void)adjustPosition
-{
-    CGSize size = _scrollView.frame.size;
-    CGPoint center = CGPointZero;
-    
-    maxSizeFrameOrContent = [self maxSize];
-    marginSizeFramePlusContent = [self marginSize];
-    
-    switch (_orientation)
-    {
-        case CMPullOrientationDown:
-            center = CGPointMake(size.width/2, 0.0f-size.height/2);
-            break;
-        case CMPullOrientationUp:
-            if(_state == CMPullRefreshClickNormal || _state == CMPullRefreshClickLoading)
-            {
-                //调整尾部高度和控件位置
-                self.frame = RectSetHeight(self.frame, clickHeight);
-                center = CGPointMake(size.width/2, _scrollView.contentSize.height + clickHeight/2);
-
-                _statusLabel.frame = RectSetY(_statusLabel.frame, (self.frame.size.height - 20.0)/2);
-                _activityView.frame = RectSetY(_activityView.frame, (self.frame.size.height - 20.0)/2);
-            }
-            else
-            {
-                center = CGPointMake(size.width/2, maxSizeFrameOrContent + size.height/2);
-            }
-            break;
-        case CMPullOrientationRight:
-            center = CGPointMake(0.0f-size.width/2, size.height/2);
-            break;
-        case CMPullOrientationLeft:
-            center = CGPointMake(maxSizeFrameOrContent+size.width/2, size.height/2);
-            break;
-        default:
-            break;
-    }
-    
-    self.center = center;
-}
-
 - (id)initWithScrollView:(UIScrollView* )scrollView orientation:(CMPullOrientation)orientation
 {
     CGSize size = scrollView.frame.size;
@@ -185,7 +128,67 @@
 }
 
 
-#pragma mark -
+#pragma mark - 动态调整
+/**
+ *  获取table视图最大高度
+ *
+ *  @return footer加载的位置
+ */
+-(float)maxSize
+{
+    return MAX(_scrollView.contentSize.height, _scrollView.frame.size.height);
+}
+
+-(float)marginSize
+{
+    return MAX(_scrollView.frame.size.height - _scrollView.contentSize.height, 0) ;
+}
+
+- (void)adjustPosition
+{
+    CGSize size = _scrollView.frame.size;
+    CGPoint center = CGPointZero;
+    
+    maxSizeFrameOrContent = [self maxSize];
+    marginSizeFramePlusContent = [self marginSize];
+    
+    switch (_orientation)
+    {
+        case CMPullOrientationDown:
+            center = CGPointMake(size.width/2, 0.0f-size.height/2);
+            break;
+        case CMPullOrientationUp:
+            if(_state == CMPullRefreshClickNormal || _state == CMPullRefreshClickLoading)
+            {
+                //调整尾部高度和控件位置
+                self.frame = RectSetHeight(self.frame, clickHeight);
+                center = CGPointMake(size.width/2, _scrollView.contentSize.height + clickHeight/2);
+                
+                _statusLabel.frame = RectSetY(_statusLabel.frame, (self.frame.size.height - 20.0)/2);
+                _activityView.frame = RectSetY(_activityView.frame, (self.frame.size.height - 20.0)/2);
+            }
+            else if(_state == CMPullRefreshEnd)
+            {
+                center = self.center;
+            }
+            else
+            {
+                center = CGPointMake(size.width/2, maxSizeFrameOrContent + size.height/2);
+            }
+            break;
+        case CMPullOrientationRight:
+            center = CGPointMake(0.0f-size.width/2, size.height/2);
+            break;
+        case CMPullOrientationLeft:
+            center = CGPointMake(maxSizeFrameOrContent+size.width/2, size.height/2);
+            break;
+        default:
+            break;
+    }
+    
+    self.center = center;
+}
+
 #pragma mark Setters
 
 - (void)refreshLastUpdatedDate
@@ -393,9 +396,9 @@
         case CMPullOrientationUp:
         {
             if(_state == CMPullRefreshClickNormal || _state == CMPullRefreshClickLoading)
-                condition = (scrollView.contentOffset.y >= clickHeight);
+                condition = (scrollView.contentOffset.y + scrollView.frame.size.height >= scrollView.contentSize.height + clickHeight);
             else
-                condition = (scrollView.contentOffset.y+scrollView.frame.size.height >= maxSizeFrameOrContent + startOffset);
+                condition = (scrollView.contentOffset.y + scrollView.frame.size.height >= maxSizeFrameOrContent + startOffset);
 
             insets = EdgeInsetSetBottom(insets, marginSizeFramePlusContent + startOffset);
             break;
@@ -443,8 +446,8 @@
 
 - (void)cmRefreshScrollViewDataSourceDidFinishedLoading:(UIScrollView *)scrollView
 {
-    if(!_activityView.isAnimating) // 如果当前没有动画，不做处理
-        return;
+//    if(!_activityView.isAnimating) // 如果当前没有动画，不做处理
+//        return;
     UIEdgeInsets insets = scrollView.contentInset;
 
     if(_state == CMPullRefreshClickNormal || _state == CMPullRefreshClickLoading)

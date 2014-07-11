@@ -24,7 +24,7 @@ typedef enum {
     CMTableViewPullDirectionAll       = (CMTableViewPullDirectionUp | CMTableViewPullDirectionDown | CMTableViewPullDirectionRight | CMTableViewPullDirectionLeft)
 }CMTableViewPullDirection;
 
-// Load type
+// data Load type
 typedef enum {
     CMTableViewLoadType_Reload,           // 刷新
     CMTableViewLoadType_LoadMore,         // 加载更多
@@ -32,10 +32,15 @@ typedef enum {
     CMTableViewLoadType_PreLoad           // 预加载更多
 }CMTableViewLoadType;
 
-//
+// Style
 typedef enum {
     CMTableViewStyleNormal,                  // regular table view
-//    CMTableViewStyleNormal
+    CMTableViewStyleRefresh             = (1 << 0),  // 只能下来刷新
+    CMTableViewStyleLoad                = (1 << 1),  // 只能上拉加载
+    CMTableViewStyleClickMore           = (1 << 2),  // 可以上拉或者点击加载
+    CMTableViewStyleLoadRoll            = (1 << 3),                                             // 加载滚动范围
+    CMTableViewStyleRefreshAndLoad      = (CMTableViewStyleRefresh | CMTableViewStyleLoad),     // 可同时下拉刷新和上拉加载
+    CMTableViewStyleRefreshAndClickMore = (CMTableViewStyleRefresh | CMTableViewStyleClickMore) // 可同时下拉刷新和上拉或者点击加载
 }CMTableViewStyle;
 
 
@@ -113,12 +118,12 @@ typedef enum {
 - (id)initWithFrame:(CGRect)frame rollingLoad:(BOOL)load;
 
 /**
- *  <#Description#>
+ *  根据风格生成对应模式的table
  *
- *  @param frame <#frame description#>
- *  @param cmStyle <#style description#>
+ *  @param frame frame description
+ *  @param cmStyle 提供的几种风格
  *
- *  @return <#return value description#>
+ *  @return 实例
  */
 - (id)initWithFrame:(CGRect)frame cmStyle:(CMTableViewStyle)style;
 
