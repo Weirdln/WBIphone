@@ -20,6 +20,7 @@
 
 @synthesize startOffset;
 @synthesize clickHeight;
+@synthesize arrowImage = _arrowImage;
 @synthesize state = _state;
 @synthesize delegate=_delegate;
 
@@ -169,7 +170,7 @@
             }
             else if(_state == CMPullRefreshEnd)
             {
-                center = self.center;
+                center = CGPointMake(size.width/2, _scrollView.contentSize.height + self.frame.size.height/2);
             }
             else
             {
@@ -449,8 +450,13 @@
 //    if(!_activityView.isAnimating) // 如果当前没有动画，不做处理
 //        return;
     UIEdgeInsets insets = scrollView.contentInset;
-
+    
     if(_state == CMPullRefreshClickNormal || _state == CMPullRefreshClickLoading)
+    {
+        [self setState:CMPullRefreshClickNormal];
+        insets = EdgeInsetSetBottom(insets, clickHeight);
+    }
+    else if(_state == CMPullRefreshEnd && _orientation == CMPullOrientationUp && insets.bottom > 0 && insets.bottom == clickHeight)  // 如果是End状态并且是可以点击加载，在刷新以后需要重置
     {
         [self setState:CMPullRefreshClickNormal];
         insets = EdgeInsetSetBottom(insets, clickHeight);

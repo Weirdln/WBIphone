@@ -91,7 +91,7 @@
             [loadButton release];
         }
         
-        if((style & (1 << 3)) >> 3)  // 如果需要click点击
+        if((style & (1 << 3)) >> 3)  // 如果需要加载滚动视图
         {
             isRollingLoad = YES;
         }
@@ -161,6 +161,28 @@
     return self;
 }
 
+#pragma mark - HeaderView相关属性统一设置方法
+-(void)setArrowImage:(UIImage *)arrowImage
+{
+    _headView.arrowImage = (id)arrowImage.CGImage;
+    _footerView.arrowImage = (id)arrowImage.CGImage;
+    _leftView.arrowImage = (id)arrowImage.CGImage;
+    _rightView.arrowImage = (id)arrowImage.CGImage;
+}
+
+//-(void)setClickHeight:(float)clickHeight
+//{
+//    _headView.clickHeight = _footerView.clickHeight = _leftView.clickHeight = _rightView.clickHeight = clickHeight;
+//}
+//
+//-(void)setStartOffset:(float)startOffset
+//{
+//    _headView.startOffset = _footerView.startOffset = _leftView.startOffset = _rightView.startOffset = startOffset;
+//}
+
+
+
+#pragma mark - 自有属性统一设置方法
 -(void)setBackgroundColor:(UIColor *)backgroundColor
 {
     _tableView.backgroundColor = backgroundColor;
@@ -187,14 +209,10 @@
     _reloading = NO;
     [self reloadData];
 
-//    if(_tableView.contentOffset.y <= 0)
-        [_headView cmRefreshScrollViewDataSourceDidFinishedLoading:_tableView];
-//    else if(_tableView.contentOffset.y >= 0)
-        [_footerView cmRefreshScrollViewDataSourceDidFinishedLoading:_tableView];
-//    if(_tableView.contentOffset.x <= 0)
-        [_rightView cmRefreshScrollViewDataSourceDidFinishedLoading:_tableView];
-//    else if(_tableView.contentOffset.x >= 0)
-        [_leftView cmRefreshScrollViewDataSourceDidFinishedLoading:_tableView];
+    [_headView cmRefreshScrollViewDataSourceDidFinishedLoading:_tableView];
+    [_footerView cmRefreshScrollViewDataSourceDidFinishedLoading:_tableView];
+    [_rightView cmRefreshScrollViewDataSourceDidFinishedLoading:_tableView];
+    [_leftView cmRefreshScrollViewDataSourceDidFinishedLoading:_tableView];
 }
 
 -(void)startManualRefresh

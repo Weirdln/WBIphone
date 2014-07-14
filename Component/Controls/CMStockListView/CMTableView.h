@@ -70,7 +70,6 @@ typedef enum {
  */
 - (void)refreshDataView:(CMTableView *)dataView visibleRange:(NSDictionary *)rangeDict;
 
-
 @end
 
 
@@ -99,6 +98,16 @@ typedef enum {
 @property (nonatomic, assign) id <UITableViewDataSource> dataSource;
 @property (nonatomic, assign) id <UITableViewDelegate> delegate;
 @property (nonatomic, assign) id <CMRefreshTableViewDelegate> refreshDataDelegate;
+
+#pragma mark - HeaderView相关属性统一设置
+/**
+ *  HeaderView相关属性统一设置
+ */
+@property (nonatomic, assign) UIImage *arrowImage;
+//@property (nonatomic, assign) float startOffset; // 开始判断的偏移量
+//@property (nonatomic, assign) float clickHeight;   // 点击加载更多行的高度
+
+
 
 /**
  *  需要上下拉加载的创建实例方法

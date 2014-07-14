@@ -65,6 +65,7 @@ typedef enum{
 
 @property (nonatomic) float startOffset; // 开始判断的偏移量
 @property (nonatomic) float clickHeight;   // 点击加载更多行的高度
+@property (nonatomic,assign) CALayer *arrowImage;
 @property (nonatomic) CMPullRefreshState state;
 @property (nonatomic,assign) id <CMRefreshTableHeaderDelegate> delegate;
 

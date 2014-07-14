@@ -38,18 +38,18 @@
 //    self.view = [[[UIView alloc] initWithFrame:[[UIScreen mainScreen]bounds]] autorelease];
     self.dataList = [NSMutableArray array];
     
-    for(int i = 0;i < 1; i ++)
+    for(int i = 0;i < 15; i ++)
         [self.dataList addObject:[NSNumber numberWithInt:i]];
 
 //    testTable = [[CMStockListView alloc] initWithFrame:CGRectMake(0, 0, ScreenW, ScreenH - kSysStatusBarHeight - kNavToolBarHeight) pullDirection:CMTableViewPullDirectionUpDown];
-    testTable = [[CMStockListView alloc] initWithFrame:CGRectMake(0, 0, ScreenW, ScreenH - kSysStatusBarHeight - kNavToolBarHeight) cmStyle:CMTableViewStyleNormal];
+    testTable = [[CMStockListView alloc] initWithFrame:CGRectMake(0, 0, ScreenW, ScreenH - kSysStatusBarHeight - kNavToolBarHeight) cmStyle:CMTableViewStyleRefreshAndClickMore];
     testTable.delegate = self;
     testTable.dataSource = self;
     testTable.refreshDataDelegate = (id<CMRefreshTableViewDelegate>)self;
     [self.view addSubview:testTable];
     [testTable release];
     
-//    [testTable performSelector:@selector(startManualRefresh) withObject:nil afterDelay:2];
+    [testTable performSelector:@selector(setHitTheEnd) withObject:nil afterDelay:2];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -70,7 +70,7 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    return 56.8;
+    return 65;
 }
 
 - (void)refreshDataView:(CMTableView *)dataView loadType:(CMTableViewLoadType)loadType indexPath:(NSIndexPath*)indexPath
@@ -83,13 +83,13 @@
         if(loadType == CMTableViewLoadType_LoadMore)
         {
             int currentCount = [self.dataList count];
-            for(int i = currentCount; i < currentCount + 1; i ++)
+            for(int i = currentCount; i < currentCount + 5; i ++)
                 [self.dataList addObject:[NSNumber numberWithInt:i]];
         }
         else
         {
             [self.dataList removeAllObjects];
-            for(int i = 0;i < 1; i ++)
+            for(int i = 0;i < 5; i ++)
                 [self.dataList addObject:[NSNumber numberWithInt:i]];
         }
         
